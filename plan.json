@@ -1,0 +1,202 @@
+{
+  "version": 1,
+  "updatedAt": "2026-10-28T22:08:00+08:00",
+  "abstract": "这是一款可在手机和电脑浏览器游玩的《骗子酒馆》：吹牛出牌、拍桌质疑、俄罗斯轮盘，骗过对手或揭穿谎言，活到最后。它支持 1 人对抗 3 个 AI 酒客、2-4 人同屏轮流，以及 2-4 人公网房间联机；联机由本机 Node 权威服务器和 Cloudflare 免费临时 HTTPS 隧道承载，房间码邀请，并内置 WebRTC 真人语音与快捷嘴炮兜底。视觉是赛博霓虹地下酒吧：深色全息牌桌、青/品红霓虹、风格化角色、电影感转轮盘演出，同时包含眼线/调包/空膛道具、AI 嘴炮、本地战绩成就与 TTS 语音开关。交付包括单文件前端 index.html、权威房间服务器 server.js、依赖清单和一键启动脚本。当前方案不购买域名、不部署云服务器、不需要任何外部账号；代价是公网链接每次重启会变化、电脑关机时朋友不能联机。批准前请重点确认这一免费临时链接口径，以及真人语音在复杂 NAT 网络下可能失败并自动退回快捷嘴炮。",
+  "brief": {
+    "artifactType": "interactive multiplayer web game",
+    "targetPlatform": ["mobile", "desktop", "responsive"],
+    "audience": "想和 AI 或朋友在手机、电脑上快速来一局，并愿意通过房间码和语音一起玩的休闲玩家与聚会玩家",
+    "businessGoal": "做出一个打开链接就能玩、规则清楚、有角色和演出感的赛博霓虹《骗子酒馆》，同时支持单机 1v3 AI、2-4 人同屏，以及带真人语音的公网房间联机。",
+    "constraints": "前端为单文件、无第三方前端运行时依赖；联机由本机 Node 服务作为权威服务器，Cloudflare Quick Tunnel 提供免费公网 HTTPS；当前不购买域名、不部署云服务器、不需要任何外部账号；电脑需保持开机，隧道链接每次重启后会变化；真人语音走 WebRTC + 公共 STUN，无 TURN，复杂 NAT 下可能失败并回退快捷嘴炮；手机麦克风要求 HTTPS；除 ws 和 cloudflared 外不引入额外服务。",
+    "mustHaveContent": "经典发牌/目标牌/1-3 张吹牛/质疑/6 膛 1 弹轮盘/淘汰与胜利；1v3 AI 与 2-4 人同屏；2-4 人公网房间、房间码邀请、准备/开局/断线重连/回合超时；WebRTC 真人语音、麦克风开关、说话状态、快捷嘴炮兜底；AI 性格与嘴炮；眼线、调包、空膛三种道具；本地战绩与成就；TTS 语音开关；赛博霓虹酒吧视觉。"
+  },
+  "output": {
+    "target": "html",
+    "componentLibrary": "none"
+  },
+  "artifacts": [
+    {
+      "path": "index.html",
+      "action": "create",
+      "purpose": "完整可玩的《骗子酒馆》赛博霓虹前端，包含大厅、单机、同屏、联机大厅/对局、规则、道具、战绩、语音与全部演出。",
+      "requirements": [
+        "单文件前端、零第三方前端运行时依赖；手机竖屏优先并适配桌面浏览器；直接打开文件时单机与同屏模式仍可用。",
+        "完整实现 1v3 AI 与 2-4 人同屏两种本地模式；同屏模式切换玩家时默认遮住手牌，需主动点击查看。",
+        "实现联机大厅：创建房间、房间码/邀请链接加入、准备状态、房主开局、房间成员与连接状态、复制链接兜底。",
+        "联机对局只渲染服务器下发的公开状态与本人手牌；不得在客户端暴露其他玩家手牌。",
+        "实现 WebRTC 语音：申请麦克风、静音、说话高亮、远端音频播放、权限拒绝/非 HTTPS/连接失败提示，并提供快捷嘴炮与 TTS 兜底。",
+        "完整实现 5 张手牌、目标牌、1-3 张扣牌出牌、质疑、揭示、6 膛 1 弹轮盘、淘汰、轮次重置与最后存活胜利；本地与联机共用同一套界面。",
+        "实现眼线（偷看上一手一张牌）、调包（弃最多两张再摸牌）、空膛（中弹时自动免死一次）三种道具及 AI 使用逻辑。",
+        "实现三位 AI 酒客的性格、嘴炮台词、决策差异，以及 WebAudio 合成音效与可选中文 TTS。",
+        "实现本地战绩与成就持久化，包括胜场、连胜、抓到骗子、空枪次数等。",
+        "赛博霓虹视觉：深色全息牌桌、青/品红霓虹、风格化 SVG 角色肖像、转轮盘演出与响应式布局。",
+        "可访问性：语义化结构、可见焦点、44px 以上触控目标、prefers-reduced-motion 支持。",
+        "不使用占位文案、外部图片、emoji 图标、虚构统计或未转义的裸 < 字符。"
+      ]
+    },
+    {
+      "path": "server.js",
+      "action": "create",
+      "purpose": "Node 权威房间服务器：静态托管前端、WebSocket 房间与对局状态机、语音信令中继、断线重连和回合超时。",
+      "requirements": [
+        "仅监听本机 127.0.0.1:8080（可配置），由 cloudflared 隧道对外提供 HTTPS/WSS；静态托管 index.html。",
+        "实现创建/加入/离开房间、4 位房间码、房主转移、准备与开局；纯真人 2-4 人，不补 AI。",
+        "实现服务端权威的牌局：洗牌发牌、目标牌、出牌校验、质疑判定、道具、6 膛 1 弹轮盘、淘汰、轮次重置与胜利结算。",
+        "每个客户端只收到自己的手牌；公开状态只包含他人手牌数、道具、膛数、牌堆声称与必要揭示信息。",
+        "实现断线重连令牌、座位保留、回合超时自动行动、房间空闲过期，避免卡死。",
+        "实现 WebRTC 语音信令转发（offer/answer/ICE/静音状态），不转发音频；对消息做来源、房间、目标玩家校验。",
+        "对昵称、动作、聊天做输入长度与频率限制；服务端错误不会导致进程崩溃。"
+      ]
+    },
+    {
+      "path": "package.json",
+      "action": "create",
+      "purpose": "声明 Node 服务依赖与启动命令。",
+      "requirements": [
+        "包含 ws 依赖和 start 脚本；不含未使用依赖；Node 版本要求写清楚。"
+      ]
+    },
+    {
+      "path": "start-server.cmd",
+      "action": "create",
+      "purpose": "Windows 一键启动本地房间服务器与 Cloudflare 临时隧道，方便重启后再次开局。",
+      "requirements": [
+        "使用 UTF-8 控制台编码，切换到脚本所在目录。",
+        "检查 node_modules 与 tools/cloudflared.exe 是否存在，缺失时给出清晰提示，不覆盖、不删除任何文件。",
+        "启动 server.js 后启动 cloudflared quick tunnel，并把公网链接显示在窗口中；不调用 taskkill 等可能影响受保护进程的命令。"
+      ]
+    }
+  ],
+  "designDirection": {
+    "fidelity": "interactive",
+    "styleSource": "custom: Cyber Neon Bar，参考 Cyber Ops 的深色命令面板与分级信息层级，按用户选择改为赛博霓虹酒吧",
+    "visualTone": ["playful", "tech-utility", "luxury-refined"],
+    "designSystemId": "",
+    "directionId": "cyber-neon-bar"
+  },
+  "structure": {
+    "screens": [
+      "大厅与模式选择",
+      "同屏人数/昵称设置",
+      "联机创建/加入房间",
+      "联机等待大厅",
+      "单机对局",
+      "同屏对局",
+      "联机对局",
+      "规则说明",
+      "战绩与成就",
+      "对局结算",
+      "语音权限与连接提示"
+    ],
+    "sections": [
+      "顶部品牌与音效/语音/规则/战绩入口",
+      "房间码、邀请链接、准备列表与房主控制",
+      "对手席位：头像、连接状态、语音状态、道具、左轮膛数、手牌数",
+      "全息牌桌：目标牌、牌堆、当前声称、回合提示与倒计时",
+      "玩家手牌与出牌/质疑/道具操作区",
+      "质疑揭示与转轮盘全屏演出",
+      "同屏交接隐私帘",
+      "道具选择与偷看结果浮层",
+      "语音控制、说话高亮与快捷嘴炮",
+      "战绩、成就与规则弹层"
+    ]
+  },
+  "interaction": {
+    "primaryFlow": "选择模式 →（单机/同屏：本地配置；联机：创建或输入房间码、准备、房主开局）→ 发牌并宣布目标牌 → 轮流扣牌或质疑 → 揭示上一手 → 输家扣扳机 → 重新发牌 → 只剩一人时结算；联机全程由服务器判定并广播。",
+    "states": [
+      "menu",
+      "setup",
+      "online-join",
+      "online-lobby",
+      "online-connecting",
+      "online-reconnecting",
+      "dealing",
+      "player-turn",
+      "ai-thinking",
+      "challenge-reveal",
+      "roulette",
+      "round-end",
+      "pass-device",
+      "peek-item",
+      "swap-item",
+      "game-over",
+      "room-ended",
+      "rules",
+      "stats",
+      "voice-request",
+      "voice-denied"
+    ]
+  },
+  "quality": {
+    "responsive": true,
+    "accessibility": true,
+    "lintRequired": true,
+    "acceptanceCriteria": [
+      "生成的产物具有响应式布局，且在 360×640 手机竖屏与 1440×900 桌面下没有文字重叠、主要控件被裁切或横向溢出。",
+      "主要操作、空/进行中/结算状态、规则与错误提示清晰可见；所有功能与 brief 一致。",
+      "质量检查结果 P0 = 0，所有 P1 问题均已修复或有明确豁免说明。",
+      "单机与同屏两种模式都能完整走完一局；质疑判定、道具消耗、轮盘概率、淘汰与胜利状态正确，同屏换人时手牌默认隐藏。",
+      "2-4 个浏览器客户端能通过房间码创建/加入/准备/开局并完整走完一局；服务端不向客户端泄露他人手牌，断线重连能恢复座位，回合超时不会卡死。",
+      "HTTPS 下语音能申请麦克风并与房间内其他玩家建立 WebRTC 连接；权限拒绝、非 HTTPS、连接失败均有提示，快捷嘴炮始终可用。",
+      "公网隧道链接能打开页面并完成 WSS 通信；音效与语音开关可独立持久化；页面不请求任何第三方前端资源。",
+      "规则、道具说明、成就文案与实际逻辑一致；不使用占位文案、emoji 图标或虚构统计。"
+    ]
+  },
+  "risks": [
+    "公网房间依赖这台电脑持续开机和 Cloudflare Quick Tunnel 的可用性；链接每次重启都会变化，不能当作长期固定域名。当前方案零费用、无需外部账号；未来若需要固定链接，可升级到 Tailscale Funnel（免费账号，电脑仍需开机）或命名隧道/云部署（涉及域名或服务器成本），游戏代码无需重写。",
+    "WebRTC 语音没有 TURN 服务器，复杂公司网络/对称 NAT 下可能无法建立音频；必须有清晰的失败提示和快捷嘴炮兜底。",
+    "公网链接对拿到链接的人可见；用随机房间码、人数上限和输入限制降低打扰风险，但不等同于账号体系。",
+    "手机麦克风、自动播放和 TTS 受浏览器权限与用户手势限制；语音只作为增强，不影响游戏判定。",
+    "单文件客户端同时承载本地状态机与联机状态同步，容易出现重复点击、断线重连和动画队列竞态，需要重点自测。",
+    "同屏模式只能通过交接帘和默认隐藏手牌降低偷看，无法从技术上完全阻止同一设备上的玩家偷看。"
+  ],
+  "resources": {
+    "skill": {
+      "id": "tianxi-app-builder",
+      "rationale": "用其从需求、视觉方向、计划审批到质量门禁的完整网页构建流程交付前端与配套服务。"
+    },
+    "styleReference": {
+      "primary": "cyber-ops",
+      "inspiration": ["x-ai", "sentry"],
+      "rationale": "借鉴深色命令面板、分级色、紧凑信息层级和清晰的状态区分；只保留与游戏界面兼容的部分，视觉改为青色/品红的赛博酒吧，不照搬安防产品外观。"
+    },
+    "requiredReads": [
+      {
+        "kind": "design-system",
+        "id": "cyber-ops",
+        "path": "C:/ProgramData/Lenovo/AIAgent/xlagent/skills/tianxi-app-builder/references/design-systems/reference/cyber-ops/DESIGN.md",
+        "reason": "提取深色表面、分级色和状态可见性的可用原则。"
+      },
+      {
+        "kind": "skill",
+        "id": "craft-typography",
+        "path": "C:/ProgramData/Lenovo/AIAgent/xlagent/skills/tianxi-app-builder/references/craft/reference/typography.md",
+        "reason": "约束字号层级、字重、全大写字距和标题追踪。"
+      },
+      {
+        "kind": "skill",
+        "id": "craft-color",
+        "path": "C:/ProgramData/Lenovo/AIAgent/xlagent/skills/tianxi-app-builder/references/craft/reference/color.md",
+        "reason": "控制霓虹强调色比例、暗色对比度和语义色使用。"
+      },
+      {
+        "kind": "skill",
+        "id": "craft-anti-ai-slop",
+        "path": "C:/ProgramData/Lenovo/AIAgent/xlagent/skills/tianxi-app-builder/references/craft/reference/anti-ai-slop.md",
+        "reason": "避免默认 AI 配色、emoji 图标、占位文案和模板化结构。"
+      },
+      {
+        "kind": "skill",
+        "id": "artifact-quality-checklist",
+        "path": "C:/ProgramData/Lenovo/AIAgent/xlagent/skills/tianxi-app-builder/references/artifact-quality-checklist.md",
+        "reason": "构建完成后逐项执行 P0/P1/P2 质量检查。"
+      },
+      {
+        "kind": "skill",
+        "id": "nudges-and-tokens",
+        "path": "C:/ProgramData/Lenovo/AIAgent/xlagent/skills/tianxi-app-builder/references/nudges-and-tokens.md",
+        "reason": "定义 seed tokens、Nudge 清单并跑完成质量门。"
+      }
+    ]
+  }
+}

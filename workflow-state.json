@@ -1,0 +1,130 @@
+{
+  "status": "ready_to_present",
+  "planApproved": true,
+  "designPlan": {
+    "status": "approved",
+    "approvedAt": "2026-10-28T22:06:22+08:00",
+    "approvedPlanHash": "e52fa0db0a432890b98447fd302a542b61fd69a39ace293c5cc58d9a137a3c8b",
+    "directExecution": null
+  },
+  "lastLintSummary": {
+    "p0": 0,
+    "p1": 0,
+    "p2": 0,
+    "fileCount": 1,
+    "checkedAt": "2026-10-28T14:54:22.105527+00:00"
+  },
+  "p1Waivers": [],
+  "buildStatus": "not_applicable",
+  "buildCommand": "",
+  "noBuildReason": "单文件 HTML，无构建步骤。",
+  "nudgesStatus": "provided",
+  "noNudgesReason": "",
+  "tweaksStatus": "provided",
+  "tweaksCount": 7,
+  "nudges": [
+    {
+      "id": "appearance",
+      "label": "Appearance",
+      "group": "Appearance",
+      "control": "preset",
+      "value": "neon-dark",
+      "presetOptions": [
+        {
+          "id": "neon-dark",
+          "label": "Neon Dark // 霓虹夜",
+          "patches": [
+            { "variable": "--seed-bg", "value": "#05060e" },
+            { "variable": "--seed-bg-2", "value": "#0a0d1a" },
+            { "variable": "--seed-surface", "value": "#0e1526" },
+            { "variable": "--seed-fg", "value": "#e8f4ff" },
+            { "variable": "--seed-primary", "value": "#21e6ff" },
+            { "variable": "--seed-accent", "value": "#ff2d7e" }
+          ]
+        },
+        {
+          "id": "blood-moon",
+          "label": "Blood Moon // 血月",
+          "patches": [
+            { "variable": "--seed-bg", "value": "#0d0508" },
+            { "variable": "--seed-bg-2", "value": "#17080d" },
+            { "variable": "--seed-surface", "value": "#1e0d15" },
+            { "variable": "--seed-fg", "value": "#ffeef4" },
+            { "variable": "--seed-primary", "value": "#ff4d7d" },
+            { "variable": "--seed-accent", "value": "#ffb347" }
+          ]
+        },
+        {
+          "id": "acid-rain",
+          "label": "Acid Rain // 酸雨",
+          "patches": [
+            { "variable": "--seed-bg", "value": "#040b0a" },
+            { "variable": "--seed-bg-2", "value": "#071512" },
+            { "variable": "--seed-surface", "value": "#0b1d19" },
+            { "variable": "--seed-fg", "value": "#e9fff8" },
+            { "variable": "--seed-primary", "value": "#4dffc3" },
+            { "variable": "--seed-accent", "value": "#d8ff3e" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "primary-neon",
+      "label": "Primary Neon",
+      "group": "Color",
+      "control": "color",
+      "variable": "--seed-primary",
+      "selector": ":root",
+      "value": "#21e6ff"
+    },
+    {
+      "id": "accent-neon",
+      "label": "Accent Neon",
+      "group": "Color",
+      "control": "color",
+      "variable": "--seed-accent",
+      "selector": ":root",
+      "value": "#ff2d7e"
+    },
+    {
+      "id": "glow-radius",
+      "label": "Glow Radius",
+      "group": "Effects",
+      "control": "slider",
+      "variable": "--seed-glow",
+      "selector": ":root",
+      "value": "26px"
+    },
+    {
+      "id": "corner-radius",
+      "label": "Corner Radius",
+      "group": "Shape",
+      "control": "slider",
+      "variable": "--seed-radius",
+      "selector": ":root",
+      "value": "14px"
+    },
+    {
+      "id": "motion-speed",
+      "label": "Motion Speed",
+      "group": "Motion",
+      "control": "slider",
+      "variable": "--seed-motion",
+      "selector": ":root",
+      "value": "1"
+    },
+    {
+      "id": "card-scale",
+      "label": "Card Scale",
+      "group": "Density",
+      "control": "slider",
+      "variable": "--seed-card-scale",
+      "selector": ":root",
+      "value": "1"
+    }
+  ],
+  "noThemeNudgesReason": "游戏是固定夜间的叙事场景，浅色主题会破坏霓虹对比与酒馆氛围；改用三套夜间外观预设（霓虹夜 / 血月 / 酸雨）。",
+  "noNonColorNudgesReason": "",
+  "fixSummary": "完成单文件前端 index.html、权威房间服务器 server.js、launch.js 一键隧道、start-server.cmd 与依赖清单。修复了牌桌网格未撑满导致内容堆在顶部、嘴炮气泡遮挡目标牌、移动端大厅准备按钮沉底、结算时同屏手牌遮罩残留、重复揭示音效、本地结算未写入战绩、WebRTC 晚开麦无 offer、advance 双端竞态等问题；补齐缺失头像/主题样式、移动端 360×640 适配与同屏交接隐私。验证：41 项房间服务集成测试全过、45 项无头 Edge 浏览器检查全过（含 360×640/1440×900、在线双端、WebRTC 语音 1 个连接、无横向溢出）、单机 1v3 与 2 人同屏均通过完整对局到结算、file:// 直接打开可玩本地模式、质量 lint P0/P1/P2 全 0、Nudge 覆盖无告警。后续修复：项目移动到 C:\\Users\\Lenovo\\天禧ai\\liars-tavern 后，start-server.cmd 的 LF 换行与 UTF-8 中文导致 cmd.exe 拆行、误判依赖安装失败并立即退出（双击一闪而过）；已将脚本改为纯 ASCII + CRLF，并在桌面创建『骗子酒馆』快捷方式。公网复测：Serveo 通道 HTTPS 页面、390px 手机布局、WSS 建房、邀请链接 10/10 通过。",
+  "completedAt": "2026-10-28T22:56:00+08:00"
+}

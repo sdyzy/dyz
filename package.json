@@ -1,0 +1,18 @@
+{
+  "name": "liars-tavern-neon",
+  "version": "1.0.0",
+  "private": true,
+  "description": "骗子酒馆 · 赛博霓虹版：单机 AI、同屏与公网房间联机",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "tunnel": "node launch.js",
+    "build": "node temporary/build.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}
