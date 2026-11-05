@@ -392,6 +392,7 @@ function b64ToBytes(value: string): Uint8Array {
 const INDEX_HTML: string = new TextDecoder('utf-8').decode(b64ToBytes(B64));
 
 
+const VERSION = '1.6.3';
 const FAST = Deno.env.get('TEST_FAST') === '1';
 const TURN_MS = FAST ? 2500 : 30000;
 const REVEAL_AUTO_MS = FAST ? 1800 : 18000;
@@ -488,16 +489,19 @@ function randomItem(): string {
 /* rooms 互不可见，表现为「刚建好的房间，别人加入时提示不存在」。       */
 /* 下面用 Deno KV 做一层消息中继：房间仍然只存在于房主 isolate，客人   */
 /* isolate 把消息转发过去，再把房主发回来的消息投递给本地 socket。     */
-/* 只有检测到 Deno Deploy 或显式 RELAY=1 时才启用；本地单进程运行保持   */
-/* 原来的纯内存模式，测试不受影响。                                    */
+/* 默认就尝试开启：Deno Deploy 的环境变量在不同部署方式下并不完全一致， */
+/* 只靠 DENO_DEPLOYMENT_ID 判断会导致线上悄悄退回单实例内存模式。       */
+/* 本地没有 --unstable-kv 时 openKv 会失败，自动退回内存模式；测试可用   */
+/* RELAY=0 显式关闭。                                                  */
 /* ------------------------------------------------------------------ */
 
-const RELAY_ENABLED = !!Deno.env.get('DENO_DEPLOYMENT_ID') || Deno.env.get('RELAY') === '1';
+const RELAY_ENABLED = Deno.env.get('RELAY') !== '0';
 const INSTANCE_ID = randomHex(8);
 const RELAY_POLL_MS = Math.max(80, Number(Deno.env.get('RELAY_POLL_MS') || 200));
 const RELAY_TTL_MS = 60 * 1000;
 const ROOM_OWNER_TTL_MS = 2 * 60 * 1000;
 let relayKv: any = null;
+let relayError = '';
 const relaySeqMap = new Map<string, number>();
 const remoteConns = new Map<string, any>();
 const remoteSessions = new Map<number, any>();
@@ -507,12 +511,16 @@ if (RELAY_ENABLED) {
   try {
     const kvPath = Deno.env.get('KV_PATH');
     const openKv = (Deno as any).openKv;
+    if (typeof openKv !== 'function') throw new Error('当前运行时不支持 Deno.openKv');
     relayKv = kvPath ? await openKv(kvPath) : await openKv();
-    console.log(`[relay] instance ${INSTANCE_ID} ready`);
+    console.log(`[relay] instance ${INSTANCE_ID} ready (v${VERSION})`);
   } catch (err) {
-    console.error('[relay] Deno KV 不可用，退回单实例内存模式', err);
+    relayError = String((err && (err as any).message) || err || 'KV unavailable').slice(0, 160);
+    console.warn('[relay] Deno KV 不可用，退回单实例内存模式：', relayError);
     relayKv = null;
   }
+} else {
+  relayError = 'disabled by RELAY=0';
 }
 
 function relaySeqKey(value: number): string {
@@ -2464,12 +2472,14 @@ Deno.serve({ port }, (req: Request) => {
   if (url.pathname === '/health') {
     const payload = JSON.stringify({
       ok: true,
+      version: VERSION,
       rooms: rooms.size,
       players: Array.from(rooms.values()).reduce((sum: number, room: any) => sum + room.players.length, 0),
       uptime: Math.round((Date.now() - startedAt) / 1000),
       fast: FAST,
       runtime: 'deno',
       relay: !!relayKv,
+      relayError,
       instance: INSTANCE_ID,
       remoteSessions: remoteSessions.size
     });
@@ -2504,7 +2514,8 @@ Deno.serve({ port }, (req: Request) => {
 });
 
 console.log('');
-console.log('  骗子酒馆 · NEON  (Deno Deploy)');
+console.log('  骗子酒馆 · NEON  (Deno Deploy)  v' + VERSION);
+console.log(`  中继模式   ${relayKv ? 'Deno KV 跨实例' : '单实例内存'}`);
 console.log(`  监听端口   ${port}`);
 console.log(`  回合计时   ${Math.round(TURN_MS / 1000)}s${FAST ? '  (TEST_FAST)' : ''}`);
 console.log('');
